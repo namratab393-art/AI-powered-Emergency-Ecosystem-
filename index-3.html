@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live GPS Location</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    .top {
+      padding: 16px;
+      background: white;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+
+    h2 { margin: 0 0 8px; }
+
+    #status {
+      font-size: 14px;
+      color: #555;
+    }
+
+    #map {
+      width: 100%;
+      height: 70vh;
+      min-height: 400px;
+    }
+
+    .info {
+      padding: 15px;
+      background: white;
+      line-height: 1.7;
+    }
+
+    button {
+      border: 0;
+      padding: 12px 18px;
+      border-radius: 8px;
+      background: #00897b;
+      color: white;
+      font-size: 16px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top">
+    <h2>📍 Live GPS Location</h2>
+    <div id="status">Location permission ka wait ho raha hai...</div>
+    <button onclick="startLocation()">Start / Refresh Location</button>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="info">
+    <b>Latitude:</b> <span id="lat">-</span><br>
+    <b>Longitude:</b> <span id="lng">-</span><br>
+    <b>Accuracy:</b> <span id="accuracy">-</span> meters
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    let map = L.map('map').setView([20.5937, 78.9629], 5);
+    let marker = null;
+    let circle = null;
+    let watchId = null;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function startLocation() {
+      if (!navigator.geolocation) {
+        document.getElementById('status').textContent =
+          'Is device/browser mein GPS support nahi hai.';
+        return;
+      }
+
+      document.getElementById('status').textContent =
+        'GPS location le rahe hain... Permission Allow karein.';
+
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+
+      watchId = navigator.geolocation.watchPosition(
+        showPosition,
+        showError,
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 15000
+        }
+      );
+    }
+
+    function showPosition(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const accuracy = Math.round(position.coords.accuracy);
+
+      document.getElementById('lat').textContent = lat.toFixed(6);
+      document.getElementById('lng').textContent = lng.toFixed(6);
+      document.getElementById('accuracy').textContent = accuracy;
+      document.getElementById('status').textContent =
+        '🟢 Live location active';
+
+      if (!marker) {
+        marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup('📍 Your Live Location').openPopup();
+      } else {
+        marker.setLatLng([lat, lng]);
+      }
+
+      if (!circle) {
+        circle = L.circle([lat, lng], {
+          radius: accuracy
+        }).addTo(map);
+      } else {
+        circle.setLatLng([lat, lng]);
+        circle.setRadius(accuracy);
+      }
+
+      map.setView([lat, lng], 17);
+    }
+
+    function showError(error) {
+      let message = 'GPS location nahi mil rahi.';
+
+      if (error.code === 1) {
+        message = 'Location permission Denied hai. Browser settings mein Location Allow karein.';
+      } else if (error.code === 2) {
+        message = 'Location unavailable hai. GPS on karke dobara try karein.';
+      } else if (error.code === 3) {
+        message = 'GPS timeout. Thodi der baad dobara try karein.';
+      }
+
+      document.getElementById('status').textContent = '🔴 ' + message;
+    }
+
+    // Page open hote hi GPS start
+    startLocation();
+  </script>
+</body>
+</html>
