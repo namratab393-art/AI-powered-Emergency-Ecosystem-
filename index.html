@@ -139,11 +139,12 @@
   </section>
 
 </div>
-
 <footer>
-  BCA Project Prototype • AI Emergency Response Ecosystem
+BCA Project Prototype • AI Emergency Response
+<button onclick="sendEmergencyAlert()">
+🚨 Send Emergency Alert
+</button>
 </footer>
-
 <script>
 let liveLatitude = null;
 let liveLongitude = null;
@@ -233,6 +234,26 @@ function analyzeEmergency() {
     "Priority: <strong>High</strong><br>" +
     "Status: Response request generated (prototype).";
 }
+  function sendEmergencyAlert() {
+  const location = document.getElementById("location").value;
+  const details = document.getElementById("details").value;
+
+  if (!location || !details) {
+    alert("Please enter the location and emergency details first.");
+    return;
+  }
+
+  const message =
+    "EMERGENCY ALERT\n" +
+    "Type: " + document.getElementById("type").value + "\n" +
+    "Location: " + location + "\n" +
+    "Details: " + details + "\n\n" +
+    "Please send help.";
+
+  window.location.href =
+    "sms:?body=" + encodeURIComponent(message);
+  }
+  
 </script>
 
 </body>
